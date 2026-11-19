@@ -1,0 +1,3 @@
+[submodule "Facial_Codec"]
+	path = Facial_Codec
+	url = https://github.com/OpenFacebot/Facial_Codec.git
