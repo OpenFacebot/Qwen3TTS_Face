@@ -1,0 +1,12 @@
+{
+  "codec": "semantic_gan",
+  "output": "runs/holdlistenstream_semantic_gan",
+  "epochs": 20,
+  "batch_size": 2,
+  "accumulation": 4,
+  "lr": 0.00001,
+  "window": 60,
+  "drop": 30,
+  "max_length": 4000,
+  "seed": 1986
+}

@@ -22,3 +22,8 @@ wheels/
 .vscode/
 venv/
 env/
+data/
+.venv/
+.runtime/
+runs/
+.pytest_cache/

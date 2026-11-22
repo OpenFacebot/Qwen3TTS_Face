@@ -1,5 +1,7 @@
 # Qwen3-TTS
 
+本仓库的语音与面部联合生成入口见 [Qwen3-TTS holdlistenstream](finetuning/HOLDLISTENSTREAM.md)：冻结复用 Facial_Codec 权重，重建训练数据，按 0.4 秒块训练和生成音频及 61 维面部动作。
+
 <br>
 
 <p align="center">

@@ -1,0 +1,469 @@
+{
+  "protocol": "qwen-holdlistenstream-v1",
+  "scope": "short_validation_only",
+  "base_model": "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+  "base_snapshot_sha256": "b15da2b2d17246324ba35a339b0b1af9c9a9d7766e80aa3946d2d912cd70aea9",
+  "full_training_started": false,
+  "tests": {
+    "unit": 24,
+    "frozen_codec_assets": 7
+  },
+  "data": {
+    "status": "complete",
+    "fingerprint": "5220e410ddfb982073b2f472a195c259777b6051b006e8e5890e46414c6704d9",
+    "variants": {
+      "semantic_gan": {
+        "train": {
+          "records": 22949,
+          "blocks": 16214076,
+          "hours": 1801.564,
+          "index_sha256": "2afbaf3b5f805e34b702a88220ae8be4428b69c4281985034a2cce35848f13ed"
+        },
+        "dev": {
+          "records": 322,
+          "blocks": 172010,
+          "hours": 19.112222222222222,
+          "index_sha256": "67991951619b1673d203745cdfd76ef962ef4afa9eced25b09aae18af4b5d88d"
+        }
+      },
+      "vae_vq": {
+        "train": {
+          "records": 22949,
+          "blocks": 16214076,
+          "hours": 1801.564,
+          "index_sha256": "af59529b416627de13f55253521ef81cb763977e24903e1179f2eaee6044645a"
+        },
+        "dev": {
+          "records": 322,
+          "blocks": 172010,
+          "hours": 19.112222222222222,
+          "index_sha256": "23c5ff427412caa6aa6e93a69b2ea03286e2ee755b427923a9f972820d608bb3"
+        }
+      }
+    },
+    "diagnostics": {
+      "streams_with_nonfinite_motion": 14540,
+      "raw_nonfinite_values": 73353813,
+      "max_tail_motion_frames": 50
+    },
+    "references": {
+      "count": 464,
+      "short": {
+        "train-P0321": 1.18
+      }
+    }
+  },
+  "windows": {
+    "train": 203999,
+    "dev": 2126
+  },
+  "archive": {
+    "archive": "data/qwen_holdlistenstream_v1.tar",
+    "bytes": 2424307712,
+    "sha256": "7bb004c45e0e32c637c6d4a352149496770da127cf835b3fea55111f64fa9f3b",
+    "verified_npz_artifacts": 70277,
+    "all_receipts_match": true,
+    "validation_report_matches": true
+  },
+  "runs": {
+    "semantic_gan": {
+      "train_windows": 512,
+      "dev_windows": 64,
+      "epochs": [
+        {
+          "event": "epoch_saved",
+          "epoch": 1,
+          "global_step": 32,
+          "validation": [
+            11.639215724213829,
+            2.625970927469003,
+            6.500762294664824,
+            7.063015960318734
+          ],
+          "seconds": 106.995,
+          "checkpoint": "runs/smoke_semantic_gan/checkpoint-epoch-0001.pt"
+        },
+        {
+          "event": "epoch_saved",
+          "epoch": 2,
+          "global_step": 64,
+          "validation": [
+            10.67022311811294,
+            1.9385531723105311,
+            5.9719896901880825,
+            6.940072892632993
+          ],
+          "seconds": 110.776,
+          "checkpoint": "runs/smoke_semantic_gan/checkpoint-epoch-0002.pt"
+        }
+      ],
+      "resumed": {
+        "event": "resumed",
+        "checkpoint": "runs/smoke_semantic_gan/latest.pt",
+        "epoch": 1,
+        "global_step": 32,
+        "optimizer": true,
+        "scheduler": true,
+        "rng_ranks": 2
+      },
+      "checkpoint": {
+        "codec": "semantic_gan",
+        "source": "runs/smoke_semantic_gan/checkpoint-epoch-0002.pt",
+        "local_cache": "/tmp/qwen3tts_face/checkpoints/semantic_gan.pt",
+        "sha256": "fa57145f5c44a325e6fb7178906dbb1dd4a48cbae728e84125508fb0b52a7233",
+        "bytes": 23422546580,
+        "epoch": 2,
+        "global_step": 64,
+        "optimizer_steps": [
+          64
+        ],
+        "optimizer_parameters": 483,
+        "scheduler_last_epoch": 128,
+        "rng_ranks": 2,
+        "signature": "5a5432b1b2eb2b92dc777eb5cdda286ca3f88a36ac073df0af5f62713248c5ab",
+        "data_fingerprint": "98ef09b6962d3a74088c1d6f589913a3d4b5c08af383c85d851140e5e09c459f",
+        "seconds": 140.95364729315042
+      },
+      "streaming": {
+        "ticks": 450,
+        "seconds_of_media": 180.0,
+        "audio_samples": 4320000,
+        "motion_frames": 4500,
+        "max_lm_positions": 1974,
+        "first_tick_seconds": 0.6726605743169785,
+        "mean_tick_seconds": 0.5041709928380118,
+        "p95_tick_seconds": 0.5154997508972883,
+        "real_time_factor": 1.2604274820950296,
+        "window_rollovers": 4,
+        "max_face_history_groups": 9,
+        "peak_cuda_memory_bytes": 4626031616,
+        "parity": [
+          {
+            "audio_equal": true,
+            "face_equal": true
+          },
+          {
+            "audio_equal": true,
+            "face_equal": true
+          },
+          {
+            "audio_equal": true,
+            "face_equal": true
+          },
+          {
+            "audio_equal": true,
+            "face_equal": true
+          }
+        ],
+        "parity_dtype": "float32",
+        "streaming_dtype": "bfloat16"
+      },
+      "frozen_codec": {
+        "path": "/data/L202500493/Audio_Face/CosyVoice_Face/face_tokenizer/runs/experiments/base/semantic_gan/checkpoints/epoch_005.pt",
+        "sha256": "aa53bacb5f617a3ebd45e1ecac5e1aa1381f8f7c9d9c7205596a7dcb47f390fa",
+        "metadata": {
+          "version": 2,
+          "codec_type": "semantic",
+          "fps": 25,
+          "data_dim": 61,
+          "hop_frames": 5,
+          "channels": [
+            "EyeBlinkLeft",
+            "EyeLookDownLeft",
+            "EyeLookInLeft",
+            "EyeLookOutLeft",
+            "EyeLookUpLeft",
+            "EyeSquintLeft",
+            "EyeWideLeft",
+            "EyeBlinkRight",
+            "EyeLookDownRight",
+            "EyeLookInRight",
+            "EyeLookOutRight",
+            "EyeLookUpRight",
+            "EyeSquintRight",
+            "EyeWideRight",
+            "JawForward",
+            "JawLeft",
+            "JawRight",
+            "JawOpen",
+            "MouthClose",
+            "MouthFunnel",
+            "MouthPucker",
+            "MouthLeft",
+            "MouthRight",
+            "MouthSmileLeft",
+            "MouthSmileRight",
+            "MouthFrownLeft",
+            "MouthFrownRight",
+            "MouthDimpleLeft",
+            "MouthDimpleRight",
+            "MouthStretchLeft",
+            "MouthStretchRight",
+            "MouthRollLower",
+            "MouthRollUpper",
+            "MouthShrugLower",
+            "MouthShrugUpper",
+            "MouthPressLeft",
+            "MouthPressRight",
+            "MouthLowerDownLeft",
+            "MouthLowerDownRight",
+            "MouthUpperUpLeft",
+            "MouthUpperUpRight",
+            "BrowDownLeft",
+            "BrowDownRight",
+            "BrowInnerUp",
+            "BrowOuterUpLeft",
+            "BrowOuterUpRight",
+            "CheekPuff",
+            "CheekSquintLeft",
+            "CheekSquintRight",
+            "NoseSneerLeft",
+            "NoseSneerRight",
+            "TongueOut",
+            "HeadYaw",
+            "HeadPitch",
+            "HeadRoll",
+            "LeftEyeYaw",
+            "LeftEyePitch",
+            "LeftEyeRoll",
+            "RightEyeYaw",
+            "RightEyePitch",
+            "RightEyeRoll"
+          ],
+          "layout": [
+            "motion",
+            "phonetic",
+            "residual_0",
+            "residual_1",
+            "residual_2"
+          ],
+          "codebook_sizes": [
+            1024,
+            1024,
+            1024,
+            1024,
+            1024
+          ],
+          "architecture_id": "f0a08c3b5e78bbb4eda7a4d489a9581fea54d6934cd138280c5a205da5266863",
+          "model_id": "aa53bacb5f617a3ebd45e1ecac5e1aa1381f8f7c9d9c7205596a7dcb47f390fa"
+        },
+        "geometry": {
+          "variant": "semantic_gan",
+          "sizes": [
+            1024,
+            1024,
+            1024,
+            1024,
+            1024
+          ],
+          "hop": 5,
+          "fps": 25
+        }
+      }
+    },
+    "vae_vq": {
+      "train_windows": 512,
+      "dev_windows": 64,
+      "epochs": [
+        {
+          "event": "epoch_saved",
+          "epoch": 1,
+          "global_step": 32,
+          "validation": [
+            11.839182479073125,
+            2.828500218949755,
+            6.55379915687698,
+            7.044542419336335
+          ],
+          "seconds": 98.852,
+          "checkpoint": "runs/smoke_vae_vq/checkpoint-epoch-0001.pt"
+        },
+        {
+          "event": "epoch_saved",
+          "epoch": 2,
+          "global_step": 64,
+          "validation": [
+            10.706022909162627,
+            1.971370937803987,
+            5.996224987383042,
+            6.935784434461729
+          ],
+          "seconds": 105.367,
+          "checkpoint": "runs/smoke_vae_vq/checkpoint-epoch-0002.pt"
+        }
+      ],
+      "resumed": {
+        "event": "resumed",
+        "checkpoint": "runs/smoke_vae_vq/latest.pt",
+        "epoch": 1,
+        "global_step": 32,
+        "optimizer": true,
+        "scheduler": true,
+        "rng_ranks": 2
+      },
+      "checkpoint": {
+        "codec": "vae_vq",
+        "source": "runs/smoke_vae_vq/checkpoint-epoch-0002.pt",
+        "local_cache": "/tmp/qwen3tts_face/checkpoints/vae_vq.pt",
+        "sha256": "3e49c55c6a3cc78b1e76a5b682ae7672e29f22a1cc1025111982c591eb98763c",
+        "bytes": 23051116648,
+        "epoch": 2,
+        "global_step": 64,
+        "optimizer_steps": [
+          64
+        ],
+        "optimizer_parameters": 408,
+        "scheduler_last_epoch": 128,
+        "rng_ranks": 2,
+        "signature": "85300257daf7132772a85eca75603eb803f00e9cacc67e7e423a4a95a94d7690",
+        "data_fingerprint": "bbe9ca57a064790b1bc126bbba80d72eaab49ae011058d1c9c5213d6bd48024b",
+        "seconds": 125.82429556176066
+      },
+      "streaming": {
+        "ticks": 450,
+        "seconds_of_media": 180.0,
+        "audio_samples": 4320000,
+        "motion_frames": 4500,
+        "max_lm_positions": 1674,
+        "first_tick_seconds": 0.5555631667375565,
+        "mean_tick_seconds": 0.4124571673158142,
+        "p95_tick_seconds": 0.42666935157030816,
+        "real_time_factor": 1.0311429182895355,
+        "window_rollovers": 4,
+        "max_face_history_groups": 9,
+        "peak_cuda_memory_bytes": 4521355776,
+        "parity": [
+          {
+            "audio_equal": true,
+            "face_equal": true
+          },
+          {
+            "audio_equal": true,
+            "face_equal": true
+          },
+          {
+            "audio_equal": true,
+            "face_equal": true
+          },
+          {
+            "audio_equal": true,
+            "face_equal": true
+          }
+        ],
+        "parity_dtype": "float32",
+        "streaming_dtype": "bfloat16"
+      },
+      "frozen_codec": {
+        "path": "/data/L202500493/Audio_Face/CosyVoice_Face/face_tokenizer/runs/experiments/base/vae_vq/checkpoints/epoch_005.pt",
+        "sha256": "313f86f3a06ed16937f66a71891f67cf048c966282b843e4c1be6f6a382518db",
+        "metadata": {
+          "version": 2,
+          "codec_type": "vae",
+          "fps": 25,
+          "data_dim": 61,
+          "hop_frames": 5,
+          "channels": [
+            "EyeBlinkLeft",
+            "EyeLookDownLeft",
+            "EyeLookInLeft",
+            "EyeLookOutLeft",
+            "EyeLookUpLeft",
+            "EyeSquintLeft",
+            "EyeWideLeft",
+            "EyeBlinkRight",
+            "EyeLookDownRight",
+            "EyeLookInRight",
+            "EyeLookOutRight",
+            "EyeLookUpRight",
+            "EyeSquintRight",
+            "EyeWideRight",
+            "JawForward",
+            "JawLeft",
+            "JawRight",
+            "JawOpen",
+            "MouthClose",
+            "MouthFunnel",
+            "MouthPucker",
+            "MouthLeft",
+            "MouthRight",
+            "MouthSmileLeft",
+            "MouthSmileRight",
+            "MouthFrownLeft",
+            "MouthFrownRight",
+            "MouthDimpleLeft",
+            "MouthDimpleRight",
+            "MouthStretchLeft",
+            "MouthStretchRight",
+            "MouthRollLower",
+            "MouthRollUpper",
+            "MouthShrugLower",
+            "MouthShrugUpper",
+            "MouthPressLeft",
+            "MouthPressRight",
+            "MouthLowerDownLeft",
+            "MouthLowerDownRight",
+            "MouthUpperUpLeft",
+            "MouthUpperUpRight",
+            "BrowDownLeft",
+            "BrowDownRight",
+            "BrowInnerUp",
+            "BrowOuterUpLeft",
+            "BrowOuterUpRight",
+            "CheekPuff",
+            "CheekSquintLeft",
+            "CheekSquintRight",
+            "NoseSneerLeft",
+            "NoseSneerRight",
+            "TongueOut",
+            "HeadYaw",
+            "HeadPitch",
+            "HeadRoll",
+            "LeftEyeYaw",
+            "LeftEyePitch",
+            "LeftEyeRoll",
+            "RightEyeYaw",
+            "RightEyePitch",
+            "RightEyeRoll"
+          ],
+          "layout": [
+            "vq"
+          ],
+          "codebook_sizes": [
+            1024
+          ],
+          "architecture_id": "c0d6649f09aabc2c79c6ab87879b66a125dbf4d8939875c3916f690ef3a4d2e3",
+          "model_id": "313f86f3a06ed16937f66a71891f67cf048c966282b843e4c1be6f6a382518db"
+        },
+        "geometry": {
+          "variant": "vae_vq",
+          "sizes": [
+            1024
+          ],
+          "hop": 5,
+          "fps": 25
+        }
+      }
+    }
+  },
+  "runtime": {
+    "python": "3.10.12",
+    "packages": {
+      "torch": "2.6.0+cu124",
+      "torchaudio": "2.6.0+cu124",
+      "transformers": "4.57.3",
+      "accelerate": "1.12.0",
+      "numpy": "1.26.4",
+      "scipy": "1.15.3",
+      "pyarrow": "18.1.0"
+    },
+    "gpu_devices": [
+      6,
+      7
+    ],
+    "gpu_names": [
+      "NVIDIA H100 80GB HBM3",
+      "NVIDIA H100 80GB HBM3"
+    ],
+    "facial_codec_commit": "b5ba74ad41b455cf7c19ea6fac1dfa6c7c4f7b31"
+  }
+}

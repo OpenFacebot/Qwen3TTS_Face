@@ -120,6 +120,17 @@ class Qwen3TTSModel:
         generate_defaults = model.generate_config
         return cls(model=model, processor=processor, generate_defaults=generate_defaults)
 
+    def start_holdlistenstream(self, checkpoint, *, ref_audio=None, speaker_embedding=None, **kwargs):
+        """Open a trained text/audio/face stream; each tick emits 0.4 seconds.
+
+        Supply a holdlistenstream checkpoint and exactly one reference audio or
+        2048-dimensional speaker embedding. The returned session exposes tick()
+        and close(); the ordinary Qwen audio APIs are unchanged.
+        """
+        from qwen_tts.holdlistenstream.session import HoldListenSession
+        return HoldListenSession(self, checkpoint, ref_audio=ref_audio,
+                                 speaker_embedding=speaker_embedding, **kwargs)
+
     def _supported_languages_set(self) -> Optional[set]:
         langs = getattr(self.model, "get_supported_languages", None)
         if callable(langs):
