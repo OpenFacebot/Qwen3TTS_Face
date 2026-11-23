@@ -5,6 +5,7 @@ import hashlib
 import io
 import json
 from pathlib import Path
+import shutil
 import time
 import zipfile
 
@@ -168,6 +169,69 @@ def verified(path, fingerprint):
 def save_npz(path, fingerprint, arrays, details):
     atomic_write(path, lambda f: np.savez_compressed(f, **arrays))
     write_json(str(path) + ".json", dict(fingerprint=fingerprint, sha256=file_hash(path), **details))
+
+
+def reuse_common(args, contract, records):
+    """Copy validated codec-independent payloads into a separate dataset build."""
+    source, output = Path(args.reuse_common_from), Path(args.output)
+    if source.resolve() == output.resolve():
+        raise ValueError("Reuse requires a separate output dataset")
+    parent = read_contract(source / "contract.json")
+    report = read_json(source / "validation.json")
+    if report["status"] != "complete" or report["fingerprint"] != parent["fingerprint"]:
+        raise ValueError("Source dataset has not passed complete validation")
+    for key in ("version", "algorithm", "model_files", "preprocessing", "clock", "source_manifest_sha256", "counts"):
+        if parent[key] != contract[key]:
+            raise ValueError(f"Cannot reuse common data: incompatible {key}")
+    if digest(read_json(source / "sources.json")) != digest(records) or digest(records) != parent["source_manifest_sha256"]:
+        raise ValueError("Source manifest changed")
+    refs = read_json(source / "references.json")
+    expected_refs = {r["split"] + "-" + r["speaker"] for r in records}
+    if set(refs) != expected_refs:
+        raise ValueError("Reference participants differ from the source manifest")
+    variant = next(iter(parent["codecs"]))
+    expected, index_hashes = {}, {}
+    for split in ("train", "dev"):
+        index = source / variant / (split + ".jsonl")
+        index_hashes[split] = file_hash(index)
+        if index_hashes[split] != report["variants"][variant][split]["index_sha256"]:
+            raise ValueError("Source dataset index checksum mismatch")
+        rows = [json.loads(line) for line in index.read_text().splitlines() if line]
+        by_id = {r["utt"]: r for r in rows}
+        selected = [r for r in records if r["split"] == split]
+        if len(by_id) != len(rows) or set(by_id) != {r["utt"] for r in selected}:
+            raise ValueError("Source dataset index identities differ")
+        for record in selected:
+            row = by_id[record["utt"]]
+            key = split + "-" + record["speaker"]
+            common, reference = f"common/{split}/{record['utt']}.npz", f"references/{key}.npz"
+            if row["blocks"] != record["blocks"] or row["common"] != common or row["reference"] != reference or refs[key] != reference:
+                raise ValueError("Source cache paths or temporal spans differ")
+            for name, relative in (("common", common), ("reference", reference)):
+                checksum = row["checksums"][name]
+                if expected.setdefault(relative, checksum) != checksum:
+                    raise ValueError("Conflicting source cache checksums")
+    for number, (relative, checksum) in enumerate(sorted(expected.items()), 1):
+        src, target = source / relative, output / relative
+        receipt = read_json(str(src) + ".json")
+        if receipt.get("fingerprint") != parent["fingerprint"] or receipt.get("sha256") != checksum or file_hash(src) != checksum:
+            raise ValueError(f"Source cache checksum mismatch: {src}")
+        if not verified(target, contract["fingerprint"]) or file_hash(target) != checksum:
+            def copy_payload(stream):
+                with src.open("rb") as incoming:
+                    shutil.copyfileobj(incoming, stream, length=8 << 20)
+            atomic_write(target, copy_payload)
+            if file_hash(target) != checksum:
+                raise ValueError(f"Copied cache checksum mismatch: {target}")
+            receipt.update(fingerprint=contract["fingerprint"],
+                           reused_from=dict(path=str(source.resolve()), fingerprint=parent["fingerprint"]))
+            write_json(str(target) + ".json", receipt)
+        if number % 1000 == 0:
+            print(json.dumps(dict(stage="reuse_common", copied_or_verified=number, total=len(expected))), flush=True)
+    write_json(output / "references.json", refs)
+    write_json(output / "common_reuse.json", dict(source=str(source.resolve()), source_fingerprint=parent["fingerprint"],
+               index_sha256=index_hashes, common_streams=len(records), references=len(refs), artifacts=len(expected)))
+    print(json.dumps(dict(stage="reuse_common", status="complete", common_streams=len(records), references=len(refs))), flush=True)
 
 
 def prepare_references(args, contract, records):
@@ -381,6 +445,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--old-cache", default="data/seamless_facial_codec")
     p.add_argument("--source-manifest", help="A previously exported sources.json; rebuild without any old token caches")
+    p.add_argument("--reuse-common-from", help="Validated dataset with identical inputs; reuse audio/text/reference payloads during --stage index or all")
     p.add_argument("--raw-root", default="/home/Seamless_Interaction_Dataset_ARKit/data_arkit")
     p.add_argument("--codec-root", default="../CosyVoice_Face/face_tokenizer/runs/experiments/base")
     p.add_argument("--model", required=True, help="Complete local Qwen 1.7B Base snapshot")
@@ -403,11 +468,15 @@ def main():
         p.error("Batch size and CPU worker/thread counts must be positive")
     if args.validate_only:
         args.stage = "validate"
+    if args.reuse_common_from and args.stage not in ("all", "index"):
+        p.error("--reuse-common-from requires --stage index or all")
     contract = initialize(args)
     records = read_json(Path(args.output) / "sources.json")
     if digest(records) != contract["source_manifest_sha256"]:
         raise ValueError("Source manifest changed")
-    if args.stage in ("all", "references"):
+    if args.reuse_common_from:
+        reuse_common(args, contract, records)
+    if args.stage in ("all", "references") and not args.reuse_common_from:
         prepare_references(args, contract, records)
     if args.stage in ("all", "encode"):
         encode_records(args, contract, records)

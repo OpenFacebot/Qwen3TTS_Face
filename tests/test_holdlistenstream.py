@@ -38,14 +38,18 @@ def test_annotation_sentence_arrival_and_release():
     validate_slots(np.asarray(slots), 100)
 
 
-def test_rolling_supervision_covers_each_block_once():
-    p = WindowPolicy()
+@pytest.mark.parametrize("window,drop,expected", [
+    (60, 30, [(0, 150, 0), (75, 225, 75)]),
+    (30, 6, [(0, 75, 0), (15, 90, 60)]),
+])
+def test_rolling_supervision_covers_each_block_once(window, drop, expected):
+    p = WindowPolicy.from_seconds(window, drop)
     coverage = np.zeros(503, dtype=int)
     spans = list(p.spans(len(coverage)))
-    assert spans[:2] == [(0, 150, 0), (75, 225, 75)]
+    assert spans[:2] == expected
     for start, end, loss in spans:
         coverage[start + loss:end] += 1
-        assert end - start <= 150
+        assert end - start <= p.window_blocks
     assert (coverage == 1).all()
     with pytest.raises(ValueError):
         WindowPolicy.from_seconds(60, .3)
@@ -210,3 +214,47 @@ def test_corrupt_cache_is_rebuilt_and_contract_changes_are_rejected(tmp_path):
     write_json(tmp_path / "contract.json", contract)
     with pytest.raises(ValueError, match="fingerprint"):
         read_contract(tmp_path / "contract.json")
+
+
+def test_common_reuse_requires_matching_inputs_and_pinned_contents(tmp_path):
+    import json
+    from qwen_tts.holdlistenstream.prepare import reuse_common, save_npz, verified
+    from qwen_tts.holdlistenstream.files import write_json, read_json, file_hash, digest
+    source, output = tmp_path / "parent", tmp_path / "semantic"
+    records = [dict(utt=split + "-one", split=split, speaker="P001", blocks=1) for split in ("train", "dev")]
+    parent = dict(version=1, algorithm="qwen-holdlistenstream-v1", model_files={"weights": "base"},
+                  preprocessing={"version": 1}, clock={"seconds": .4}, source_manifest_sha256=digest(records),
+                  counts={"train": 1, "dev": 1}, codecs={"vae_vq": {}})
+    parent["fingerprint"] = digest(parent)
+    write_json(source / "contract.json", parent)
+    write_json(source / "sources.json", records)
+    refs, reports = {}, {}
+    for record in records:
+        split = record["split"]
+        common, ref = f"common/{split}/{record['utt']}.npz", f"references/{split}-P001.npz"
+        refs[split + "-P001"] = ref
+        save_npz(source / common, parent["fingerprint"], {"audio": np.zeros((5, 16), dtype=np.uint16)}, {})
+        save_npz(source / ref, parent["fingerprint"], {"speaker": np.ones(2048, dtype=np.float32)}, {})
+        index = source / "vae_vq" / (split + ".jsonl")
+        index.parent.mkdir(parents=True, exist_ok=True)
+        index.write_text(json.dumps(dict(utt=record["utt"], blocks=1, common=common, reference=ref,
+                         checksums={"common": file_hash(source / common), "reference": file_hash(source / ref)})) + "\n")
+        reports[split] = {"index_sha256": file_hash(index)}
+    write_json(source / "references.json", refs)
+    write_json(source / "validation.json", dict(status="complete", fingerprint=parent["fingerprint"], variants={"vae_vq": reports}))
+    child = {**parent, "codecs": {"semantic": {}}}
+    child["fingerprint"] = digest({k: v for k, v in child.items() if k != "fingerprint"})
+    args = SimpleNamespace(reuse_common_from=str(source), output=str(output))
+    reuse_common(args, child, records)
+    target = output / "common/train/train-one.npz"
+    assert verified(target, child["fingerprint"])
+    assert file_hash(target) == file_hash(source / "common/train/train-one.npz")
+    assert read_json(str(source / "common/train/train-one.npz") + ".json")["fingerprint"] == parent["fingerprint"]
+    assert not (output / "vae_vq").exists()
+    with pytest.raises(ValueError, match="clock"):
+        reuse_common(args, {**child, "clock": {"seconds": .8}}, records)
+    # A self-consistent replacement payload/receipt still cannot bypass the
+    # checksum pinned by the validated parent's index.
+    save_npz(source / "common/train/train-one.npz", parent["fingerprint"], {"audio": np.ones((5, 16), dtype=np.uint16)}, {})
+    with pytest.raises(ValueError, match="checksum"):
+        reuse_common(args, child, records)

@@ -134,6 +134,39 @@ CUDA_VISIBLE_DEVICES=6,7 HF_HUB_OFFLINE=1 OMP_NUM_THREADS=4 \
 
 `metrics.jsonl` 记录音频首码本、音频辅助码本、面部损失及每轮验证结果。总损失为 `audio + 0.3 * audio_aux + face`，面部损失在所有码本上平均。
 
+### semantic 30/6 实验
+
+`finetuning/configs/holdlistenstream_semantic_30_6.json` 使用非 GAN 的 `semantic` codec，窗口 30 秒、步长 6 秒，保留 24 秒上下文；重叠部分不重复计算损失。训练为 10 epochs，每轮保存完整检查点，其他优化器设置沿用上面的配置。全量数据对应 996,910 个训练窗口和 10,298 个验证窗口。
+
+本实验的数据为 `data/qwen_holdlistenstream_semantic_v1`，面部 token 从原始动作和冻结的 `semantic/epoch_005.pt` 重新生成。Qwen 音频码、文本槽和固定参考音色复用已完整校验的 `qwen_holdlistenstream_v1`。复用入口逐项比较源清单、Qwen 权重、预处理和时钟设置，并核对父构建索引固定的文件摘要；新构建保存独立副本及来源记录。
+
+再次准备同类数据时选择新的输出目录，例如以下单卡命令；`--stage index` 可先完成索引和复用，再用 `--stage encode --worker/--workers` 分配多卡任务，最后 `--validate-only`：
+
+```bash
+CUDA_VISIBLE_DEVICES=4 OMP_NUM_THREADS=4 HF_HUB_OFFLINE=1 \
+  .venv/bin/python -m qwen_tts.holdlistenstream.prepare \
+  --model .runtime/models/Qwen3-TTS-12Hz-1.7B-Base \
+  --output data/qwen_holdlistenstream_semantic_v2 \
+  --source-manifest data/qwen_holdlistenstream_v1/sources.json \
+  --reuse-common-from data/qwen_holdlistenstream_v1 \
+  --codecs semantic --stage all --rebuild all
+```
+
+使用已准备的 v1 数据启动训练：
+
+```bash
+CUDA_VISIBLE_DEVICES=4,5 OMP_NUM_THREADS=4 MKL_NUM_THREADS=4 HF_HUB_OFFLINE=1 \
+  .venv/bin/accelerate launch \
+  --num_processes 2 --num_machines 1 --multi_gpu --mixed_precision bf16 --main_process_port 29672 \
+  finetuning/train_holdlistenstream.py \
+  --config finetuning/configs/holdlistenstream_semantic_30_6.json \
+  --epochs 10 --train-limit 0 --dev-limit 0
+```
+
+输出目录为 `runs/holdlistenstream_semantic_30_6`。需要恢复时，保留相同参数并添加 `--resume runs/holdlistenstream_semantic_30_6/latest.pt`。使用另一次数据构建时，通过 `--data` 和 `--output` 指定新的数据与实验目录。
+
+本机 v1 数据缓存指向 `/tmp/qwen3tts_face/holdlistenstream_semantic_v1`，完整归档保存为 `data/qwen_holdlistenstream_semantic_v1.tar` 及旁边的 `.sha256` 文件。恢复方式与上面的原数据缓存相同。
+
 ## 流式推理和验证
 
 ```python
