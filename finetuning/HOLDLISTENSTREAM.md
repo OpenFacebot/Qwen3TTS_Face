@@ -113,7 +113,7 @@ CUDA_VISIBLE_DEVICES=6,7 .venv/bin/accelerate launch \
   --epochs 2 --train-limit 512 --dev-limit 64 --output runs/smoke_semantic_gan
 ```
 
-VAE-VQ 使用 `holdlistenstream_vae_vq.json` 和独立的输出目录。正式训练使用同一命令，删除三个短程参数 `--epochs 2 --train-limit 512 --dev-limit 64`，并选择正式输出目录。默认 20 epochs、每卡 batch=2、累积=4、BF16、梯度检查点、AdamW lr=1e-5、weight decay=0.01、梯度裁剪=1。
+VAE-VQ 使用 `holdlistenstream_vae_vq.json` 和独立的输出目录。正式训练使用同一命令，删除三个短程参数 `--epochs 2 --train-limit 512 --dev-limit 64`，并选择正式输出目录。semantic-GAN 和 30/6 semantic 配置均为 10 epochs，每轮保存完整检查点后，第 10 轮结束即停止；VAE-VQ 配置仍为 20 epochs。每卡 batch=2、累积=4、BF16、梯度检查点、AdamW lr=1e-5、weight decay=0.01、梯度裁剪=1。
 
 完整 semantic-GAN 训练命令：
 
@@ -224,7 +224,7 @@ HOLDLISTEN_LEGACY_TOOLS=/data/L202500493/tmp/semantic_motion/vendor/cosyvoice_ba
 | semantic-GAN | 11.639 | 10.670 | 0.504 秒 | 1.260 |
 | VAE-VQ | 11.839 | 10.706 | 0.412 秒 | 1.031 |
 
-两套模型均完成 180 秒连续生成，分别输出 4,320,000 个音频采样点和 4,500 帧动作，完成 4 次窗口滚动。缓存/完整前缀 token 一致性在 FP32 下验证，长流式测试使用 BF16。RTF 大于 1，当前实现尚未达到持续实时生成速度。完整 20 轮训练命令已准备好，本次仅执行上述短程验证。
+两套模型均完成 180 秒连续生成，分别输出 4,320,000 个音频采样点和 4,500 帧动作，完成 4 次窗口滚动。缓存/完整前缀 token 一致性在 FP32 下验证，长流式测试使用 BF16。RTF 大于 1，当前实现尚未达到持续实时生成速度。正式训练命令见上文；本节结果仅来自上述短程验证。
 
 原始动作中 14,540 条流含非有限值，共 73,353,813 个值，沿用旧 V2 规则修复。464 份参考音色中，`train-P0321` 的最长语音参考为 1.18 秒，已在数据报告中标记。共享盘归档的 70,277 个 NPZ 产物均重新核对了内容摘要。
 
